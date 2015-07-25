@@ -90,6 +90,10 @@ func main() {
 		},
 	}
 	app.Action = func(c *cli.Context) {
+		if len(c.Args()) < 1 {
+			cli.ShowAppHelp(c)
+			os.Exit(1)
+		}
 		cmds := strings.Split(c.String("exec"), " ")
 		doWatch(c.Args(), cmds)
 	}
