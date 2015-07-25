@@ -38,6 +38,10 @@ func doWatch(paths cli.Args, cmd []string) {
 					log.Println("created file: ", event.Name)
 					execCommand(cmd)
 				}
+				if event.Op&fsnotify.Remove == fsnotify.Remove {
+					log.Println("removed file: ", event.Name)
+					execCommand(cmd)
+				}
 			case err := <-watcher.Errors:
 				log.Println("error:", err)
 			}
