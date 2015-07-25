@@ -80,7 +80,7 @@ OPTIONS:
 func main() {
 	initialize()
 	app := cli.NewApp()
-	app.Name = "watcher"
+	app.Name = "mihari"
 	app.Usage = "Executes command when file or directories are modified"
 	app.Version = "0.0.1"
 	app.Flags = []cli.Flag{
