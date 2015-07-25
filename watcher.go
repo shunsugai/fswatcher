@@ -18,7 +18,7 @@ func execCommand(cmd []string) {
 	fmt.Printf("%s", out)
 }
 
-func doWatch(dir string, cmd []string) {
+func doWatch(paths cli.Args, cmd []string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatal(err)
@@ -44,35 +44,50 @@ func doWatch(dir string, cmd []string) {
 		}
 	}()
 
-	err = watcher.Add(dir)
-	if err != nil {
-		log.Fatal(err)
+	for _, path := range paths {
+		err = watcher.Add(path)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	<-done
 }
 
+func initialize() {
+	cli.AppHelpTemplate = `NAME:
+   {{.Name}} - {{.Usage}}
+
+USAGE:
+   {{.Name}} [options] [path...]
+
+VERSION:
+   {{.Version}}{{if or .Author .Email}}
+
+AUTHOR:{{if .Author}}
+  {{.Author}}{{if .Email}} - <{{.Email}}>{{end}}{{else}}
+  {{.Email}}{{end}}{{end}}
+
+OPTIONS:
+   {{range .Flags}}{{.}}
+   {{end}}
+`
+}
+
 func main() {
+	initialize()
 	app := cli.NewApp()
 	app.Name = "watcher"
 	app.Usage = "Executes command when file or directories are modified"
 	app.Version = "0.0.1"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "directory, d",
-			Usage: "directory to watch",
-		},
-		cli.StringFlag{
 			Name:  "exec, e",
 			Usage: "command to execute",
 		},
 	}
 	app.Action = func(c *cli.Context) {
-		if len(os.Args[1:]) < 4 {
-			cli.ShowAppHelp(c)
-			os.Exit(1)
-		}
 		cmds := strings.Split(c.String("exec"), " ")
-		doWatch(c.String("directory"), cmds)
+		doWatch(c.Args(), cmds)
 	}
 	app.Run(os.Args)
 }
