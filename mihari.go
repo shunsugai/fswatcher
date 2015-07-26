@@ -57,7 +57,7 @@ func doWatch(paths cli.Args, cmd []string) {
 	<-done
 }
 
-func initialize() {
+func init() {
 	cli.AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
@@ -78,7 +78,6 @@ OPTIONS:
 }
 
 func main() {
-	initialize()
 	app := cli.NewApp()
 	app.Name = "mihari"
 	app.Usage = "Executes command when file or directories are modified"
