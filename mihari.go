@@ -97,6 +97,8 @@ func main() {
 	app.Name = "mihari"
 	app.Usage = "Executes command when file or directories are modified"
 	app.Version = "0.0.1"
+	app.Author = "Shun Sugai"
+	app.Email = "sugaishun@gmail.com"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "exec, e",
