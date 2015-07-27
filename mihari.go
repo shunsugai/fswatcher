@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/codegangsta/cli"
-	"gopkg.in/fsnotify.v1"
+	fsnotify "gopkg.in/fsnotify.v1"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -16,6 +17,21 @@ func execCommand(cmd []string) {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s", out)
+}
+
+func addDirRecursively(root string, w *fsnotify.Watcher) error {
+	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			base := info.Name()
+			if base != "." && strings.HasPrefix(base, ".") {
+				return filepath.SkipDir
+			}
+			if err := w.Add(path); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func doWatch(paths cli.Args, cmd []string) {
@@ -49,8 +65,7 @@ func doWatch(paths cli.Args, cmd []string) {
 	}()
 
 	for _, path := range paths {
-		err = watcher.Add(path)
-		if err != nil {
+		if err = addDirRecursively(path, watcher); err != nil {
 			log.Fatal(err)
 		}
 	}
