@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/codegangsta/cli"
 	fsnotify "gopkg.in/fsnotify.v1"
 	"log"
@@ -9,14 +8,20 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 func execCommand(cmd []string) {
-	out, err := exec.Command(cmd[0], cmd[1:]...).Output()
+	c := exec.Command(cmd[0], cmd[1:]...)
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stdout
+
+	c.SysProcAttr = &syscall.SysProcAttr{}
+	c.SysProcAttr.Setpgid = true
+	err := c.Start()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s", out)
 }
 
 func addDirRecursively(root string, w *fsnotify.Watcher) error {
