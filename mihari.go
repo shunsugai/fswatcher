@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"github.com/codegangsta/cli"
 	fsnotify "gopkg.in/fsnotify.v1"
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -46,6 +48,9 @@ func doWatch(paths cli.Args, cmd []string) {
 	}
 	defer watcher.Close()
 
+	sigs := make(chan os.Signal)
+	signal.Notify(sigs, syscall.SIGINT)
+
 	done := make(chan bool)
 	go func() {
 		for {
@@ -65,6 +70,10 @@ func doWatch(paths cli.Args, cmd []string) {
 				}
 			case err := <-watcher.Errors:
 				log.Println("error:", err)
+			case sig := <-sigs:
+				fmt.Println()
+				log.Println(sig)
+				done <- true
 			}
 		}
 	}()
@@ -75,6 +84,7 @@ func doWatch(paths cli.Args, cmd []string) {
 		}
 	}
 	<-done
+	log.Println("exit")
 }
 
 func init() {
