@@ -37,6 +37,9 @@ func doWatch(paths cli.Args, cmd []string) {
 	defer watcher.Close()
 
 	for _, path := range paths {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			log.Fatalf("no such file or directory: %s", path)
+		}
 		if err = addDirRecursively(path, watcher); err != nil {
 			log.Fatal(err)
 		}
