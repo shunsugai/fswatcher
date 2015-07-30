@@ -11,20 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 )
-
-func execCommand(cmd []string) {
-	c := exec.Command(cmd[0], cmd[1:]...)
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stdout
-
-	c.SysProcAttr = &syscall.SysProcAttr{}
-	c.SysProcAttr.Setpgid = true
-	err := c.Start()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 func addDirRecursively(root string, w *fsnotify.Watcher) error {
 	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -48,43 +36,84 @@ func doWatch(paths cli.Args, cmd []string) {
 	}
 	defer watcher.Close()
 
-	sigs := make(chan os.Signal)
-	signal.Notify(sigs, syscall.SIGINT)
-
-	done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case event := <-watcher.Events:
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					log.Println("modified file: ", event.Name)
-					execCommand(cmd)
-				}
-				if event.Op&fsnotify.Create == fsnotify.Create {
-					log.Println("created file: ", event.Name)
-					execCommand(cmd)
-				}
-				if event.Op&fsnotify.Remove == fsnotify.Remove {
-					log.Println("removed file: ", event.Name)
-					execCommand(cmd)
-				}
-			case err := <-watcher.Errors:
-				log.Println("error:", err)
-			case sig := <-sigs:
-				fmt.Println()
-				log.Println(sig)
-				done <- true
-			}
-		}
-	}()
-
 	for _, path := range paths {
 		if err = addDirRecursively(path, watcher); err != nil {
 			log.Fatal(err)
 		}
 	}
-	<-done
-	log.Println("exit")
+
+	osSignal := make(chan os.Signal)
+	signal.Notify(osSignal, syscall.SIGINT)
+
+	localSig := make(chan string)
+
+	go func() {
+		for {
+			log.Println("Start command")
+			c := exec.Command(cmd[0], cmd[1:]...)
+			c.Stdout = os.Stdout
+			c.Stderr = os.Stdout
+
+			c.SysProcAttr = &syscall.SysProcAttr{}
+			c.SysProcAttr.Setpgid = true
+			err := c.Start()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			done := make(chan error, 1)
+			go func() {
+				done <- c.Wait()
+			}()
+			select {
+			case <-localSig:
+				if err := c.Process.Kill(); err != nil {
+					log.Fatal("failed to kill: ", err)
+				}
+				<-done
+				log.Println("*** Kill TASK ***")
+				goto SKIP_WAITING
+			case err := <-done:
+				if err != nil {
+					log.Fatal("process done with error = %v", err)
+				}
+			}
+			log.Println("Wait for signal...")
+			if msg := <-localSig; msg == "Interrupt" {
+				log.Println("Exit")
+				os.Exit(1)
+			}
+		SKIP_WAITING:
+			time.Sleep(1)
+		}
+	}()
+
+	// handle event
+	for {
+		select {
+		case event := <-watcher.Events:
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				fmt.Println()
+				log.Println("modified file: ", event.Name)
+				localSig <- "Modified"
+			}
+			if event.Op&fsnotify.Create == fsnotify.Create {
+				fmt.Println()
+				log.Println("created file: ", event.Name)
+				localSig <- "Created"
+			}
+			if event.Op&fsnotify.Remove == fsnotify.Remove {
+				fmt.Println()
+				log.Println("removed file: ", event.Name)
+				localSig <- "Removed"
+			}
+		case err := <-watcher.Errors:
+			log.Println("error:", err)
+		case <-osSignal:
+			fmt.Println()
+			localSig <- "Interrupt"
+		}
+	}
 }
 
 func init() {
