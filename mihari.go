@@ -5,7 +5,6 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	fsnotify "gopkg.in/fsnotify.v1"
-	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -18,6 +17,12 @@ import (
 func cprintln(a ...interface{}) {
 	fmt.Fprintf(color.Output, "%s %s ", color.BlackString("mihari"), color.GreenString(">>>"))
 	fmt.Println(a...)
+}
+
+func cfatal(a ...interface{}) {
+	fmt.Fprintf(color.Output, "%s %s ERROR : ", color.BlackString("mihari"), color.GreenString(">>>"))
+	fmt.Println(a...)
+	os.Exit(1)
 }
 
 func addDirRecursively(root string, w *fsnotify.Watcher) error {
@@ -38,16 +43,16 @@ func addDirRecursively(root string, w *fsnotify.Watcher) error {
 func doWatch(paths cli.Args, cmd []string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal(err)
+		cfatal(err)
 	}
 	defer watcher.Close()
 
 	for _, path := range paths {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			log.Fatalf("no such file or directory: %s", path)
+			cfatal("no such file or directory:", path)
 		}
 		if err = addDirRecursively(path, watcher); err != nil {
-			log.Fatal(err)
+			cfatal(err)
 		}
 	}
 
@@ -67,7 +72,7 @@ func doWatch(paths cli.Args, cmd []string) {
 			c.SysProcAttr.Setpgid = true
 			err := c.Start()
 			if err != nil {
-				log.Fatal(err)
+				cfatal(err)
 			}
 
 			done := make(chan error, 1)
@@ -77,7 +82,7 @@ func doWatch(paths cli.Args, cmd []string) {
 			select {
 			case msg := <-localSig:
 				if err := c.Process.Kill(); err != nil {
-					log.Fatal("failed to kill: ", err)
+					cfatal("failed to kill:", err)
 				}
 				<-done
 				cprintln("Stop command")
@@ -88,7 +93,7 @@ func doWatch(paths cli.Args, cmd []string) {
 				goto SKIP_WAITING
 			case err := <-done:
 				if err != nil {
-					log.Fatal("process done with error = %v", err)
+					cfatal("process done with error =", err)
 				}
 			}
 			cprintln("Wait for signal...")
