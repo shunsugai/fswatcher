@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/codegangsta/cli"
+	"github.com/fatih/color"
 	fsnotify "gopkg.in/fsnotify.v1"
 	"log"
 	"os"
@@ -13,6 +14,11 @@ import (
 	"syscall"
 	"time"
 )
+
+func cprintln(a ...interface{}) {
+	fmt.Fprintf(color.Output, "%s %s ", color.BlackString("mihari"), color.GreenString(">>>"))
+	fmt.Println(a...)
+}
 
 func addDirRecursively(root string, w *fsnotify.Watcher) error {
 	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -52,7 +58,7 @@ func doWatch(paths cli.Args, cmd []string) {
 
 	go func() {
 		for {
-			log.Println("Start command")
+			cprintln("Start command")
 			c := exec.Command(cmd[0], cmd[1:]...)
 			c.Stdout = os.Stdout
 			c.Stderr = os.Stdout
@@ -74,9 +80,9 @@ func doWatch(paths cli.Args, cmd []string) {
 					log.Fatal("failed to kill: ", err)
 				}
 				<-done
-				log.Println("*** Kill TASK ***")
+				cprintln("Stop command")
 				if msg == "Interrupt" {
-					log.Println("Exit")
+					cprintln("Exit")
 					os.Exit(1)
 				}
 				goto SKIP_WAITING
@@ -85,9 +91,9 @@ func doWatch(paths cli.Args, cmd []string) {
 					log.Fatal("process done with error = %v", err)
 				}
 			}
-			log.Println("Wait for signal...")
+			cprintln("Wait for signal...")
 			if msg := <-localSig; msg == "Interrupt" {
-				log.Println("Exit")
+				cprintln("Exit")
 				os.Exit(1)
 			}
 		SKIP_WAITING:
@@ -101,21 +107,21 @@ func doWatch(paths cli.Args, cmd []string) {
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				fmt.Println()
-				log.Println("modified file: ", event.Name)
+				cprintln("modified file:", event.Name)
 				localSig <- "Modified"
 			}
 			if event.Op&fsnotify.Create == fsnotify.Create {
 				fmt.Println()
-				log.Println("created file: ", event.Name)
+				cprintln("created file:", event.Name)
 				localSig <- "Created"
 			}
 			if event.Op&fsnotify.Remove == fsnotify.Remove {
 				fmt.Println()
-				log.Println("removed file: ", event.Name)
+				cprintln("removed file:", event.Name)
 				localSig <- "Removed"
 			}
 		case err := <-watcher.Errors:
-			log.Println("error:", err)
+			cprintln("error:", err)
 		case <-osSignal:
 			fmt.Println()
 			localSig <- "Interrupt"
