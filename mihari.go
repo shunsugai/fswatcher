@@ -69,12 +69,16 @@ func doWatch(paths cli.Args, cmd []string) {
 				done <- c.Wait()
 			}()
 			select {
-			case <-localSig:
+			case msg := <-localSig:
 				if err := c.Process.Kill(); err != nil {
 					log.Fatal("failed to kill: ", err)
 				}
 				<-done
 				log.Println("*** Kill TASK ***")
+				if msg == "Interrupt" {
+					log.Println("Exit")
+					os.Exit(1)
+				}
 				goto SKIP_WAITING
 			case err := <-done:
 				if err != nil {
