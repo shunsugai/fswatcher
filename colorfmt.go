@@ -7,12 +7,12 @@ import (
 )
 
 func cprintln(a ...interface{}) {
-	fmt.Fprintf(color.Output, "%s %s ", color.BlackString(appName), color.GreenString(">>>"))
+	fmt.Fprintf(color.Output, "%s %s ", color.YellowString(appName), color.GreenString(">>>"))
 	fmt.Println(a...)
 }
 
 func cfatal(a ...interface{}) {
-	fmt.Fprintf(color.Output, "%s %s ERROR : ", color.BlackString(appName), color.GreenString(">>>"))
+	fmt.Fprintf(color.Output, "%s %s ERROR : ", color.YellowString(appName), color.GreenString(">>>"))
 	fmt.Println(a...)
 	os.Exit(1)
 }
