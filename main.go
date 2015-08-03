@@ -180,7 +180,11 @@ func main() {
 		}
 		cprintln("Now watching at:")
 		for _, arg := range c.Args() {
-			cprintln("\t", arg)
+			abs, err := filepath.Abs(arg)
+			if err != nil {
+				cprintln("ERROR: failed to convert to absolute path:", arg)
+			}
+			cprintln("\t", abs)
 		}
 		cmds := strings.Split(c.String("exec"), " ")
 		filter := c.String("includefilter")
