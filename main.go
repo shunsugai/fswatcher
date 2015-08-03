@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+const appName = "fswatcher"
+
 func addDirRecursively(root string, w *fsnotify.Watcher) error {
 	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
@@ -142,7 +144,7 @@ OPTIONS:
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "fswatcher"
+	app.Name = appName
 	app.Usage = "Executes command when file or directories are modified"
 	app.Version = "0.0.1"
 	app.Author = "Shun Sugai"
