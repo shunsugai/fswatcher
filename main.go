@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -15,7 +16,7 @@ import (
 
 const appName = "fswatcher"
 
-func addDirRecursively(root string, w *fsnotify.Watcher) error {
+func addDirRecursively(root string, w *fsnotify.Watcher, filter string) error {
 	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			base := info.Name()
@@ -25,12 +26,23 @@ func addDirRecursively(root string, w *fsnotify.Watcher) error {
 			if err := w.Add(path); err != nil {
 				return err
 			}
+		} else {
+			match, err := regexp.MatchString(filter, path)
+			if err != nil {
+				return err
+			}
+			if !match {
+				cprintln("ignore:", path)
+				if err := w.Remove(path); err != nil {
+					return err
+				}
+			}
 		}
 		return nil
 	})
 }
 
-func doWatch(paths cli.Args, cmd []string) {
+func doWatch(paths cli.Args, cmd []string, filter string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		cfatal(err)
@@ -41,7 +53,7 @@ func doWatch(paths cli.Args, cmd []string) {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			cfatal("no such file or directory:", path)
 		}
-		if err = addDirRecursively(path, watcher); err != nil {
+		if err = addDirRecursively(path, watcher, filter); err != nil {
 			cfatal(err)
 		}
 	}
@@ -156,6 +168,10 @@ func main() {
 			Name:  "exec, e",
 			Usage: "command to execute",
 		},
+		cli.StringFlag{
+			Name:  "includefilter, i",
+			Usage: "filter to include. e.g. .(go|rb|java)",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		if len(c.Args()) < 1 {
@@ -163,7 +179,8 @@ func main() {
 			os.Exit(1)
 		}
 		cmds := strings.Split(c.String("exec"), " ")
-		doWatch(c.Args(), cmds)
+		filter := c.String("includefilter")
+		doWatch(c.Args(), cmds, filter)
 	}
 	app.Run(os.Args)
 }
