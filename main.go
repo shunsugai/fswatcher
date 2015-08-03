@@ -77,7 +77,8 @@ func doWatch(paths cli.Args, cmd []string) {
 				<-done
 				cprintln("Stop command")
 				if msg == "Interrupt" {
-					cfatal("Exit")
+					cprintln("Exit")
+					os.Exit(1)
 				}
 				goto SKIP_WAITING
 			case err := <-done:
@@ -87,7 +88,8 @@ func doWatch(paths cli.Args, cmd []string) {
 			}
 			cprintln("Wait for signal...")
 			if msg := <-localSig; msg == "Interrupt" {
-				cfatal("Exit")
+				cprintln("Exit")
+				os.Exit(1)
 			}
 		SKIP_WAITING:
 			time.Sleep(1)
