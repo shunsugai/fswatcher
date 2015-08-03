@@ -32,7 +32,7 @@ func addDirRecursively(root string, w *fsnotify.Watcher, filter string) error {
 				return err
 			}
 			if !match {
-				cprintln("ignore:", path)
+				cprintln("Ignore:", path)
 				if err := w.Remove(path); err != nil {
 					return err
 				}
@@ -65,7 +65,7 @@ func doWatch(paths cli.Args, cmd []string, filter string) {
 
 	go func() {
 		for {
-			cprintln("Start command")
+			cprintln("Start command:", cmd)
 			c := exec.Command(cmd[0], cmd[1:]...)
 			c.Stdout = os.Stdout
 			c.Stderr = os.Stdout
@@ -114,21 +114,21 @@ func doWatch(paths cli.Args, cmd []string, filter string) {
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				fmt.Println()
-				cprintln("modified file:", event.Name)
+				cprintln("Modified file:", event.Name)
 				localSig <- "Modified"
 			}
 			if event.Op&fsnotify.Create == fsnotify.Create {
 				fmt.Println()
-				cprintln("created file:", event.Name)
+				cprintln("Created file:", event.Name)
 				localSig <- "Created"
 			}
 			if event.Op&fsnotify.Remove == fsnotify.Remove {
 				fmt.Println()
-				cprintln("removed file:", event.Name)
+				cprintln("Removed file:", event.Name)
 				localSig <- "Removed"
 			}
 		case err := <-watcher.Errors:
-			cprintln("error:", err)
+			cprintln("ERROR:", err)
 		case <-osSignal:
 			fmt.Println()
 			localSig <- "Interrupt"
@@ -177,6 +177,10 @@ func main() {
 		if len(c.Args()) < 1 {
 			cli.ShowAppHelp(c)
 			os.Exit(1)
+		}
+		cprintln("Now watching at:")
+		for _, arg := range c.Args() {
+			cprintln("\t", arg)
 		}
 		cmds := strings.Split(c.String("exec"), " ")
 		filter := c.String("includefilter")

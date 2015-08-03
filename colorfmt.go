@@ -12,7 +12,7 @@ func cprintln(a ...interface{}) {
 }
 
 func cfatal(a ...interface{}) {
-	fmt.Fprintf(color.Output, "%s %s ERROR : ", color.YellowString(appName), color.GreenString(">>>"))
+	fmt.Fprintf(color.Output, "%s %s ERROR: ", color.YellowString(appName), color.GreenString(">>>"))
 	fmt.Println(a...)
 	os.Exit(1)
 }
