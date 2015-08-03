@@ -142,7 +142,7 @@ OPTIONS:
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "mihari"
+	app.Name = "fswatcher"
 	app.Usage = "Executes command when file or directories are modified"
 	app.Version = "0.0.1"
 	app.Author = "Shun Sugai"
