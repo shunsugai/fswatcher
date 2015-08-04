@@ -7,7 +7,9 @@ import (
 	"strings"
 )
 
-const appName = "fswatcher"
+const (
+	APP_NAME = "fswatcher"
+)
 
 var (
 	fsw = &watcher{
@@ -19,7 +21,7 @@ var (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = appName
+	app.Name = APP_NAME
 	app.Usage = "Executes command when file or directories are modified"
 	app.Version = "0.0.1"
 	app.Author = "Shun Sugai"
