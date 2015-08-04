@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	fsnotify "gopkg.in/fsnotify.v1"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	fsnotify "gopkg.in/fsnotify.v1"
 )
 
 type watcher struct {

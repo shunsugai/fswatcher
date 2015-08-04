@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/codegangsta/cli"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/codegangsta/cli"
 )
 
 const (

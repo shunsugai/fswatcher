@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/fatih/color"
 	"os"
+
+	"github.com/fatih/color"
 )
 
 func cprintln(a ...interface{}) {
