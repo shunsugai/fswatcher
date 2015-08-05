@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	fsw = &watcher{
+	fsw = &fswatch{
 		Command: []string{"echo", "Hello, World"},
 		Paths:   []string{"."},
 		Filter:  "",
@@ -46,10 +46,10 @@ func main() {
 		fsw.Paths = []string(c.Args())
 		fsw.Filter = c.String("includefilter")
 		cprintln("Now watching at:")
-		for _, arg := range fsw.Paths {
-			abs, err := filepath.Abs(arg)
+		for _, path := range fsw.Paths {
+			abs, err := filepath.Abs(path)
 			if err != nil {
-				cprintln("ERROR: failed to convert to absolute path:", arg)
+				cprintln("ERROR: failed to convert to absolute path:", path)
 			}
 			cprintln("\t", abs)
 		}
