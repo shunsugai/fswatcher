@@ -42,16 +42,17 @@ func main() {
 			cli.ShowAppHelp(c)
 			os.Exit(1)
 		}
+		fsw.Command = strings.Split(c.String("exec"), " ")
+		fsw.Paths = []string(c.Args())
+		fsw.Filter = c.String("includefilter")
 		cprintln("Now watching at:")
-		for _, arg := range c.Args() {
+		for _, arg := range fsw.Paths {
 			abs, err := filepath.Abs(arg)
 			if err != nil {
 				cprintln("ERROR: failed to convert to absolute path:", arg)
 			}
 			cprintln("\t", abs)
 		}
-		fsw.Command = strings.Split(c.String("exec"), " ")
-		fsw.Filter = c.String("includefilter")
 		fsw.Watch()
 	}
 	app.Run(os.Args)
