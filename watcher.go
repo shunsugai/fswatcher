@@ -23,6 +23,7 @@ type fswatch struct {
 	watcher  *fsnotify.Watcher
 }
 
+// addDirRecursively adds file to watcher under given root directory recursively.
 func (f *fswatch) addDirRecursively(root string) error {
 	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
