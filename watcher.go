@@ -130,7 +130,7 @@ func (f *fswatch) Watch() (err error) {
 				goto SKIP_WAITING
 			case err := <-done:
 				if err != nil {
-					cfatal("process done with error =", err)
+					cprintln("ERROR: process done with error =", err)
 				}
 			}
 			cprintln("Wait for signal...")
