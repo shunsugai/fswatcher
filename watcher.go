@@ -39,6 +39,46 @@ func (f *fswatch) addDirRecursively(root string) error {
 	})
 }
 
+// handleEvent handles fsnotify events and OS signal.
+func (f *fswatch) handleEvent() {
+	for {
+		select {
+		case event := <-f.watcher.Events:
+			// ignore the event if modified file name is not matched with filter
+			if f.Filter != "" {
+				match, err := regexp.MatchString(f.Filter, event.Name)
+				if err != nil {
+					break
+				}
+				if !match {
+					break
+				}
+			}
+
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				fmt.Println()
+				cprintln("Modified file:", event.Name)
+				f.localSig <- "Modified"
+			}
+			if event.Op&fsnotify.Create == fsnotify.Create {
+				fmt.Println()
+				cprintln("Created file:", event.Name)
+				f.localSig <- "Created"
+			}
+			if event.Op&fsnotify.Remove == fsnotify.Remove {
+				fmt.Println()
+				cprintln("Removed file:", event.Name)
+				f.localSig <- "Removed"
+			}
+		case err := <-f.watcher.Errors:
+			cprintln("ERROR:", err)
+		case <-f.osSignal:
+			fmt.Println()
+			f.localSig <- "Interrupt"
+		}
+	}
+}
+
 func (f *fswatch) Watch() (err error) {
 	if f.watcher, err = fsnotify.NewWatcher(); err != nil {
 		cfatal(err)
@@ -103,41 +143,6 @@ func (f *fswatch) Watch() (err error) {
 		}
 	}()
 
-	// handle event
-	for {
-		select {
-		case event := <-f.watcher.Events:
-			// ignore the event if modified file name is not matched with filter
-			if f.Filter != "" {
-				match, err := regexp.MatchString(f.Filter, event.Name)
-				if err != nil {
-					break
-				}
-				if !match {
-					break
-				}
-			}
-
-			if event.Op&fsnotify.Write == fsnotify.Write {
-				fmt.Println()
-				cprintln("Modified file:", event.Name)
-				f.localSig <- "Modified"
-			}
-			if event.Op&fsnotify.Create == fsnotify.Create {
-				fmt.Println()
-				cprintln("Created file:", event.Name)
-				f.localSig <- "Created"
-			}
-			if event.Op&fsnotify.Remove == fsnotify.Remove {
-				fmt.Println()
-				cprintln("Removed file:", event.Name)
-				f.localSig <- "Removed"
-			}
-		case err := <-f.watcher.Errors:
-			cprintln("ERROR:", err)
-		case <-f.osSignal:
-			fmt.Println()
-			f.localSig <- "Interrupt"
-		}
-	}
+	f.handleEvent()
+	return nil
 }
