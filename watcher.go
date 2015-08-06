@@ -33,17 +33,6 @@ func (f *fswatch) addDirRecursively(root string) error {
 			if err := f.watcher.Add(path); err != nil {
 				return err
 			}
-		} else {
-			match, err := regexp.MatchString(f.Filter, path)
-			if err != nil {
-				return err
-			}
-			if !match {
-				cprintln("Ignore:", path)
-				if err := f.watcher.Remove(path); err != nil {
-					return err
-				}
-			}
 		}
 		return nil
 	})
@@ -117,6 +106,17 @@ func (f *fswatch) Watch() (err error) {
 	for {
 		select {
 		case event := <-f.watcher.Events:
+			// ignore the event if modified file name is not matched with filter
+			if f.Filter != "" {
+				match, err := regexp.MatchString(f.Filter, event.Name)
+				if err != nil {
+					break
+				}
+				if !match {
+					break
+				}
+			}
+
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				fmt.Println()
 				cprintln("Modified file:", event.Name)
