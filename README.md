@@ -1,19 +1,19 @@
-# mihari
+# fswatcher
 
 Simple fswatcher.   
 Executes command when file or directories are modified.
 
 ## Usage
 
-    mihari --exec '<command to execute>' <path>... 
+    fswatcher --exec '<command to execute>' <path>...
 
 Example:
 
-    mihari --exec 'git diff' ./
+    fswatcher --exec 'git diff' ./
 
 You can use short option.
 
-    mihari -e 'git diff' ./
+    fswatcher -e 'git diff' ./
 
 ## License
 
