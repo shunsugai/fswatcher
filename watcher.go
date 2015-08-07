@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	fsnotify "gopkg.in/fsnotify.v1"
 )
 
@@ -56,22 +57,19 @@ func (f *fswatch) handleEvent() {
 			}
 
 			if event.Op&fsnotify.Write == fsnotify.Write {
-				fmt.Println()
-				cprintln("Modified file:", event.Name)
+				log.Info("Modified:", event.Name)
 				f.localSig <- "Modified"
 			}
 			if event.Op&fsnotify.Create == fsnotify.Create {
-				fmt.Println()
-				cprintln("Created file:", event.Name)
+				log.Info("Created:", event.Name)
 				f.localSig <- "Created"
 			}
 			if event.Op&fsnotify.Remove == fsnotify.Remove {
-				fmt.Println()
-				cprintln("Removed file:", event.Name)
+				log.Info("Removed:", event.Name)
 				f.localSig <- "Removed"
 			}
 		case err := <-f.watcher.Errors:
-			cprintln("ERROR:", err)
+			log.Error(err)
 		case <-f.osSignal:
 			fmt.Println()
 			f.localSig <- "Interrupt"
@@ -81,16 +79,16 @@ func (f *fswatch) handleEvent() {
 
 func (f *fswatch) Watch() (err error) {
 	if f.watcher, err = fsnotify.NewWatcher(); err != nil {
-		cfatal(err)
+		log.Fatal(err)
 	}
 	defer f.watcher.Close()
 
 	for _, path := range f.Paths {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			cfatal("no such file or directory:", path)
+			log.Fatal("no such file or directory:", path)
 		}
 		if err = f.addDirRecursively(path); err != nil {
-			cfatal(err)
+			log.Fatal(err)
 		}
 	}
 
@@ -101,7 +99,7 @@ func (f *fswatch) Watch() (err error) {
 
 	go func() {
 		for {
-			cprintln("Start command:", f.Command)
+			log.Info("Run:", f.Command)
 			c := exec.Command(f.Command[0], f.Command[1:]...)
 			c.Stdout = os.Stdout
 			c.Stderr = os.Stdout
@@ -109,7 +107,7 @@ func (f *fswatch) Watch() (err error) {
 			c.SysProcAttr = &syscall.SysProcAttr{}
 			c.SysProcAttr.Setpgid = true
 			if err := c.Start(); err != nil {
-				cfatal(err)
+				log.Fatal(err)
 			}
 
 			done := make(chan error, 1)
@@ -119,23 +117,23 @@ func (f *fswatch) Watch() (err error) {
 			select {
 			case msg := <-f.localSig:
 				if err := c.Process.Kill(); err != nil {
-					cfatal("failed to kill:", err)
+					log.Fatal("failed to kill:", err)
 				}
 				<-done
-				cprintln("Stop command")
+				log.Info("Stop")
 				if msg == "Interrupt" {
-					cprintln("Exit")
+					log.Info("Exit")
 					os.Exit(1)
 				}
 				goto SKIP_WAITING
 			case err := <-done:
 				if err != nil {
-					cprintln("ERROR: process done with error =", err)
+					log.Error("process done with error =", err)
 				}
 			}
-			cprintln("Wait for signal...")
+			log.Info("Wait for signal...")
 			if msg := <-f.localSig; msg == "Interrupt" {
-				cprintln("Exit")
+				log.Info("Exit")
 				os.Exit(1)
 			}
 		SKIP_WAITING:

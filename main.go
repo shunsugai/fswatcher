@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 )
 
@@ -45,13 +46,12 @@ func main() {
 		fsw.Command = strings.Split(c.String("exec"), " ")
 		fsw.Paths = []string(c.Args())
 		fsw.Filter = c.String("includefilter")
-		cprintln("Now watching at:")
 		for _, path := range fsw.Paths {
 			abs, err := filepath.Abs(path)
 			if err != nil {
-				cprintln("ERROR: failed to convert to absolute path:", path)
+				log.Warn("failed to convert to absolute path:", path)
 			}
-			cprintln("\t", abs)
+			log.Info("Now watching at:", abs)
 		}
 		fsw.Watch()
 	}
@@ -59,6 +59,7 @@ func main() {
 }
 
 func init() {
+	log.SetLevel(log.InfoLevel)
 	cli.AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 
