@@ -30,6 +30,7 @@ func (f *fswatch) addDirRecursively(root string) error {
 		if info.IsDir() {
 			base := info.Name()
 			if base != "." && strings.HasPrefix(base, ".") {
+				log.Debug("Skip:", path)
 				return filepath.SkipDir
 			}
 			if err := f.watcher.Add(path); err != nil {
@@ -49,9 +50,11 @@ func (f *fswatch) handleEvent() {
 			if f.Filter != "" {
 				match, err := regexp.MatchString(f.Filter, event.Name)
 				if err != nil {
+					log.Warn(err, event.Name)
 					break
 				}
 				if !match {
+					log.Debug("Ignore file changed:", event.Name)
 					break
 				}
 			}
