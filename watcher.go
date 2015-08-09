@@ -36,6 +36,7 @@ func (f *fswatch) addDirRecursively(root string) error {
 			if err := f.watcher.Add(path); err != nil {
 				return err
 			}
+			log.Debug("Add:", path)
 		}
 		return nil
 	})
