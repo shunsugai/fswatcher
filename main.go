@@ -7,6 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/mattn/go-colorable"
 )
 
 const (
@@ -59,6 +60,7 @@ func main() {
 }
 
 func init() {
+	log.SetOutput(colorable.NewColorableStdout())
 	log.SetLevel(log.InfoLevel)
 	cli.AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
