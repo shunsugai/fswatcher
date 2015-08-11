@@ -18,7 +18,8 @@ import (
 type fswatch struct {
 	Command  []string
 	Paths    []string
-	Filter   string
+	Include  string
+	Exclude  string
 	osSignal chan os.Signal
 	localSig chan string
 	watcher  *fsnotify.Watcher
@@ -33,6 +34,18 @@ func (f *fswatch) addDirRecursively(root string) error {
 				log.Debug("Skip:", path)
 				return filepath.SkipDir
 			}
+
+			if f.Exclude != "" {
+				match, err := regexp.MatchString(f.Exclude, path)
+				if err != nil {
+					log.Warn(err)
+				}
+				if match {
+					log.Debug("Skip:", path)
+					return filepath.SkipDir
+				}
+			}
+
 			if err := f.watcher.Add(path); err != nil {
 				return err
 			}
@@ -48,8 +61,8 @@ func (f *fswatch) handleEvent() {
 		select {
 		case event := <-f.watcher.Events:
 			// ignore the event if modified file name is not matched with filter
-			if f.Filter != "" {
-				match, err := regexp.MatchString(f.Filter, event.Name)
+			if f.Include != "" {
+				match, err := regexp.MatchString(f.Include, event.Name)
 				if err != nil {
 					log.Warn(err, event.Name)
 					break

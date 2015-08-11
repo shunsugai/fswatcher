@@ -18,7 +18,8 @@ var (
 	fsw = &fswatch{
 		Command: []string{"echo", "Hello, World"},
 		Paths:   []string{"."},
-		Filter:  "",
+		Include: "",
+		Exclude: "",
 	}
 )
 
@@ -31,12 +32,16 @@ func main() {
 	app.Email = "sugaishun@gmail.com"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "exec, e",
+			Name:  "exec, x",
 			Usage: "command to execute",
 		},
 		cli.StringFlag{
-			Name:  "includefilter, i",
+			Name:  "include, i",
 			Usage: "filter to include. e.g. .(go|rb|java)",
+		},
+		cli.StringFlag{
+			Name:  "exclude, e",
+			Usage: "exclude paths matching REGEX.",
 		},
 	}
 	app.Action = func(c *cli.Context) {
@@ -46,7 +51,9 @@ func main() {
 		}
 		fsw.Command = strings.Split(c.String("exec"), " ")
 		fsw.Paths = []string(c.Args())
-		fsw.Filter = c.String("includefilter")
+		fsw.Include = c.String("include")
+		fsw.Exclude = c.String("exclude")
+		log.Debug("Exclude:", fsw.Exclude)
 		for _, path := range fsw.Paths {
 			abs, err := filepath.Abs(path)
 			if err != nil {
