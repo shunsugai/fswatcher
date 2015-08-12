@@ -12,8 +12,8 @@ Options:
      --exec, -x     command to execute
      --include, -i  filter to include. e.g. .(go|rb|java)
      --exclude, -e  exclude paths matching REGEX.
-     --log, -l    set log level
-     --help, -h   show help
+     --log, -l      set log level
+     --help, -h     show help
      --version, -v  print the version
 
 Example:
