@@ -5,7 +5,16 @@ Executes command when file or directories are modified.
 
 ## Usage
 
-    fswatcher --exec '<command to execute>' --include=REGEX <path>...
+    fswatcher [options] [path...]
+
+Options:
+
+     --exec, -x     command to execute
+     --include, -i  filter to include. e.g. .(go|rb|java)
+     --exclude, -e  exclude paths matching REGEX.
+     --log, -l    set log level
+     --help, -h   show help
+     --version, -v  print the version
 
 Example:
 
@@ -14,6 +23,10 @@ Example:
 You can use short option.
 
     fswatcher -x 'git diff' -i .go$ ./
+
+## Version
+
+0.0.1
 
 ## License
 
