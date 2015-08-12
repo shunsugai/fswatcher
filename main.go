@@ -43,12 +43,19 @@ func main() {
 			Name:  "exclude, e",
 			Usage: "exclude paths matching REGEX.",
 		},
+		cli.StringFlag{
+			Name:  "log, l",
+			Usage: "set log level",
+		},
 	}
 	app.Action = func(c *cli.Context) {
 		if len(c.Args()) < 1 {
 			cli.ShowAppHelp(c)
 			os.Exit(1)
 		}
+
+		setLogLevel(c.String("log"))
+
 		fsw.Command = strings.Split(c.String("exec"), " ")
 		fsw.Paths = []string(c.Args())
 		fsw.Include = c.String("include")
@@ -86,4 +93,21 @@ OPTIONS:
    {{range .Flags}}{{.}}
    {{end}}
 `
+}
+
+func setLogLevel(lv string) {
+	switch lv {
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "error":
+		log.SetLevel(log.ErrorLevel)
+	case "fatal":
+		log.SetLevel(log.FatalLevel)
+	default:
+		log.SetLevel(log.InfoLevel)
+	}
 }
